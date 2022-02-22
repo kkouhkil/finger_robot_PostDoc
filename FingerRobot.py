@@ -1,5 +1,6 @@
 #   https://www.kvaser.com/linux-drivers-and-sdk-2/
 
+from cProfile import label
 from locale import MON_1, MON_2
 from operator import length_hint
 from turtle import pos
@@ -249,7 +250,7 @@ class FingerRobot():
         # self.M2 = 0
         # self.M3 = 0
         # self.M4 = 0
-           
+             
         # L and Li (i = 1,2,3,4)    
         # L1 = self.lengthOffset + self.M2
         # L2 = self.lengthOffset + self.M4
@@ -302,18 +303,18 @@ class FingerRobot():
         print ("L3: ", L3)
         print ("L4: ", L4)
         print("thetaL = ", self.thetaL, "\tphiL = ", self.phiL)
-        # print ("EndTipPos = ", f"{self.endTip_Pos[0]:3.4f} \t{self.endTip_Pos[1]:3.4f} \t{self.endTip_Pos[2]:3.4f}")
+        print ("EndTipPos = ", f"{posE[0]:3.4f} \t{posE[1]:3.4f} \t{posE[2]:3.4f}")
 
         return posE , self.phiL
     
     
     def visualizeFK(self):
         
-        num = 20
-        M1 = np.linspace(0,10,num)  #np.zeros(num)
-        M2 = np.linspace(0,-10,num)  #np.zeros(num)
-        M3 = np.linspace(0,10,num) 
-        M4 = np.linspace(0,-10,num)
+        num = 10
+        M1 = np.linspace(0,10,num) #np.zeros(num) #np.linspace(0,10,num)  #np.zeros(num)
+        M2 = np.linspace(0,10,num) #np.zeros(num) #np.linspace(0,10,num)  #np.zeros(num)
+        M3 = np.linspace(0,10,num) #np.linspace(0,10,num) 
+        M4 = np.linspace(0,10,num) #np.linspace(0,10,num)
         
         color = np.linspace(0,1,num)
     
@@ -347,7 +348,7 @@ class FingerRobot():
         
         desPosX = 0
         desPosY = 10
-        desPosZ = 5
+        desPosZ = 10
        
         endTip_desPos = np.zeros(3)
         endTip_desPos[0] = pose0[0] + desPosX
@@ -356,14 +357,15 @@ class FingerRobot():
         
         self.robotCtrlPD(endTip_desPos - pose0)
         
-        self.Mvec[0] = 5 
-        self.Mvec[1] = 5
-        self.Mvec[2] = 5 + 30
-        self.Mvec[3] = 5 - 30
+        # self.Mvec[0] = 0
+        # self.Mvec[1] = 0
+        # self.Mvec[2] = 10 
+        # self.Mvec[3] = -10 
         
-        
-        # trajectory    
+        # trajectory 
+          
         num = 10 
+        t = np.linspace(0.0,10,num)  #np.zeros(num)
         M1 = np.linspace(0.001,self.Mvec[0],num)  #np.zeros(num)
         M2 = np.linspace(0.001,self.Mvec[1],num)  #np.zeros(num)
         M3 = np.linspace(0.001,self.Mvec[2],num) 
@@ -378,6 +380,18 @@ class FingerRobot():
         color2 = np.linspace(0,1,num)
     
         fig = plt.figure()      
+        plt.plot(t,M1,'r',ls='solid',label='M1')
+        plt.plot(t,M2,'g',ls='dotted',label='M2')
+        plt.plot(t,M3,'b',ls='dashed',label='M3')
+        plt.plot(t,M4,'k',ls='dashdot',label='M4')
+        plt.title (f"xd={ endTip_desPos[0]:3.2f} yd={ endTip_desPos[1]:3.2f} zd={ endTip_desPos[2]:3.2f} \n m1 = {self.Mvec[0]:3.2f}  m2 = {self.Mvec[1]:3.2f}  m3 = {self.Mvec[2]:3.2f} m4 = {self.Mvec[3]:3.2f}")
+        plt.xlabel("Time(s)")
+        plt.ylabel("pos(mm)")
+        plt.grid()
+        plt.legend()
+        
+        fig = plt.figure()  
+        plt.grid()  
         ax = Axes3D(fig)
 
         self.robotFK(M1[0],M2[0],M3[0],M4[0])[0]            
