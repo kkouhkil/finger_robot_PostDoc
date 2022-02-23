@@ -30,7 +30,12 @@ def mainFunc():
       
   lastCommand = time.time()
   
+  l1 = 0
+  l2 = 0
+  deltaL = 0
+  
   # robot.visualizeFK()
+  # robot.visualizeFKnew()
   robot.visualizePD()
   
   while (True):
@@ -64,6 +69,8 @@ def mainFunc():
             desPose[2] = 15
             curPose = robot.robotFK(robot.M1,robot.M2,robot.M3,robot.M4)[0]
             robot.robotCtrlPD(desPose-curPose)
+            
+            robot.robotFKnew(l1,l2,deltaL)
             
         robot.printFunc()
         #print('Time = ', f"{deltaTime:3.3f}")

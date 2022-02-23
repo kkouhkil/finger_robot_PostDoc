@@ -256,7 +256,7 @@ class FingerRobot():
         # L2 = self.lengthOffset + self.M4
         # L3 = self.lengthOffset + self.M1
         # L4 = self.lengthOffset + self.M3 
-           
+        
         L1 = self.lengthOffset + M2
         L2 = self.lengthOffset + M4
         L3 = self.lengthOffset + M1
@@ -268,7 +268,16 @@ class FingerRobot():
         A = [(L - L1)*math.cos(beta) - (L - L2)]
         B = [(L - L1)*math.sin(beta)]
         
-        self.phiL = np.arctan2(A,B)
+        # phiL condition 
+        if (M1 > M2 or M3 > M4):
+            self.phiL = np.arctan2(A,B);
+        else:
+            self.phiL = (np.arctan2(A,B) + math.pi);
+        ##############################################    
+
+        # phiL no condition
+        # self.phiL = np.arctan2(A,B)
+        ##############################################
 
         # theta L
         phi1 = self.phiL
@@ -281,7 +290,22 @@ class FingerRobot():
         d3 = r*math.cos(phi3)
         d4 = r*math.cos(phi4)
         
-        self.thetaL = (self.theta0 - (L-L1)/self.d1)
+        # thetaL condition
+        if (L - L1 == 0):
+            self.thetaL = (self.theta0 - (L-L2)/self.d1)
+        elif (L - L2 == 0):
+            self.thetaL = (self.theta0 - (L-L1)/self.d1)
+        elif (L - L1 > 0 and L - L2 < 0):
+            self.thetaL = (self.theta0 - (L-L1)/self.d1)
+        elif (L - L1 < 0 and L - L2 > 0):
+            self.thetaL = (self.theta0 - (L-L2)/self.d1)
+        else:
+            self.thetaL = (self.theta0 - (L-L1)/self.d1)
+        ##############################################
+        
+        # thetaL no condition
+        # self.thetaL = (self.theta0 - (L-L1)/self.d1)
+        ##############################################
         
         #rotation matrices:
         c_z = math.cos(-self.phiL)
@@ -307,15 +331,112 @@ class FingerRobot():
 
         return posE , self.phiL
     
+    def robotFKnew(self, l1,l2,deltaL):
+        
+        #Initialization
+        self.theta0 = (math.pi)/2
+        r      = 7.5 #0.0075
+        beta   = (math.pi)/2
+        
+        # self.M1 = 0
+        # self.M2 = 0
+        # self.M3 = 0
+        # self.M4 = 0
+             
+        # L and Li (i = 1,2,3,4)    
+        # L1 = self.lengthOffset + self.M2
+        # L2 = self.lengthOffset + self.M4
+        # L3 = self.lengthOffset + self.M1
+        # L4 = self.lengthOffset + self.M3 
+        
+        M1 = deltaL + l1
+        M2 = deltaL - l1
+        M3 = deltaL + l2
+        M4 = deltaL - l2
+           
+        L1 = self.lengthOffset + M2
+        L2 = self.lengthOffset + M4
+        L3 = self.lengthOffset + M1
+        L4 = self.lengthOffset + M3        
+                
+        L = (L1 + L2 + L3 + L4)/4
+        
+        # phiL condition
+        A = [(L - L1)*math.cos(beta) - (L - L2)]
+        B = [(L - L1)*math.sin(beta)]
+        
+        if (M1 > M2 or M3 > M4):
+            self.phiL = np.arctan2(A,B);
+        else:
+            self.phiL = (np.arctan2(A,B) + math.pi);
+        ##############################################
+        
+        # phiL no condition
+        # self.phiL = np.arctan2(A,B)
+        ##############################################
+
+        # theta L
+        phi1 = self.phiL
+        phi2 = self.phiL + (math.pi)/2
+        phi3 = self.phiL + (math.pi)
+        phi4 = self.phiL + 3*(math.pi)/2
+        
+        self.d1 = r*math.cos(0)
+        d2 = r*math.cos(phi2)
+        d3 = r*math.cos(phi3)
+        d4 = r*math.cos(phi4)
+        
+        # thetaL condition
+        if (L - L1 == 0):
+            self.thetaL = (self.theta0 - (L-L2)/self.d1)
+        elif (L - L2 == 0):
+            self.thetaL = (self.theta0 - (L-L1)/self.d1)
+        elif (L - L1 > 0 and L - L2 < 0):
+            self.thetaL = (self.theta0 - (L-L1)/self.d1)
+        elif (L - L1 < 0 and L - L2 > 0):
+            self.thetaL = (self.theta0 - (L-L2)/self.d1)
+        else:
+            self.thetaL = (self.theta0 - (L-L1)/self.d1)
+        ############################################## 
+            
+        # thetaL no codntion    
+        # self.thetaL = (self.theta0 - (L-L1)/self.d1)
+        ##############################################
+        
+        #rotation matrices:
+        c_z = math.cos(-self.phiL)
+        s_z = math.sin(-self.phiL)
+        Rb1_z = np.array(((c_z, -s_z, 0), (s_z, c_z, 0), (0, 0, 1)))
+        
+        c_y = math.cos((L-L1)/self.d1)
+        s_y = math.sin((L-L1)/self.d1)
+        R1e_y = np.array(((c_y, 0, s_y), (0, 1, 0), (-s_y, 0, c_y)))
+        
+        Rbe = Rb1_z @ R1e_y
+
+        posZX = np.array([L*np.cos(self.thetaL),0,L*np.sin(self.thetaL)])
+     
+        posEnew = Rb1_z @ posZX
+        print ("\nL: ", L)
+        print ("L1: ", L1)
+        print ("L2: ", L2)
+        print ("L3: ", L3)
+        print ("L4: ", L4)
+        print("thetaL = ", self.thetaL, "\tphiL = ", self.phiL)
+        print ("EndTipPos = ", f"{posEnew[0]:3.4f} \t{posEnew[1]:3.4f} \t{posEnew[2]:3.4f}")
+
+        return posEnew , self.phiL
+    
     
     def visualizeFK(self):
         
         num = 10
-        M1 = np.linspace(0,10,num) #np.zeros(num) #np.linspace(0,10,num)  #np.zeros(num)
-        M2 = np.linspace(0,10,num) #np.zeros(num) #np.linspace(0,10,num)  #np.zeros(num)
-        M3 = np.linspace(0,10,num) #np.linspace(0,10,num) 
-        M4 = np.linspace(0,10,num) #np.linspace(0,10,num)
         
+        M2 = np.linspace(0,10,num)
+        M4 = np.linspace(0,10,num) 
+        M1 = np.linspace(0,10,num)
+        M3 = np.linspace(0,10,num) 
+
         color = np.linspace(0,1,num)
     
         fig = plt.figure()
@@ -342,13 +463,46 @@ class FingerRobot():
         print("End Pose:", self.endTip_Pos)
         # time.sleep(1)
         
+    def visualizeFKnew(self):
+            
+        num = 10        
+        l1 = np.linspace(0,10,num) 
+        l2 = np.linspace(0,10,num) 
+        deltaL = np.linspace(0,10,num) 
+        
+        color = np.linspace(0,1,num)
+    
+        fig = plt.figure()
+        ax = fig.add_subplot(projection='3d')
+       
+        for i in range(num):
+            pose = self.robotFKnew(l1[i],l2[i],deltaL[i])[0]
+            # pose = [i,i,i]
+            ax.scatter(pose[0],pose[1],pose[2],color = [0,0,color[i]])        
+            # plt.hold(True)
+        
+            print("pose:",pose)
+            
+            
+        ax.set(xlim=(-10, 10),  xticks=np.arange(-10, 10),
+                ylim=(-10, 10), yticks=np.arange(-10, 10),
+                zlim=(0, 20), zticks=np.arange(0, 20))
+
+        ax.set_xlabel('X Label')
+        ax.set_ylabel('Y Label')
+        ax.set_zlabel('Z Label')
+        plt.show()  
+        
+        print("End Pose:", self.endTip_Pos)
+        # time.sleep(1)
+        
     def visualizePD(self):
         
         pose0 =  self.robotFK(0,0,0,0)[0]
         
         desPosX = 0
-        desPosY = 10
-        desPosZ = 10
+        desPosY = 0
+        desPosZ = 0
        
         endTip_desPos = np.zeros(3)
         endTip_desPos[0] = pose0[0] + desPosX
@@ -366,10 +520,10 @@ class FingerRobot():
           
         num = 10 
         t = np.linspace(0.0,10,num)  #np.zeros(num)
-        M1 = np.linspace(0.001,self.Mvec[0],num)  #np.zeros(num)
-        M2 = np.linspace(0.001,self.Mvec[1],num)  #np.zeros(num)
-        M3 = np.linspace(0.001,self.Mvec[2],num) 
-        M4 = np.linspace(0.001,self.Mvec[3],num)
+        M1 = np.linspace(0,self.Mvec[0],num)  #np.zeros(num)
+        M2 = np.linspace(0,self.Mvec[1],num)  #np.zeros(num)
+        M3 = np.linspace(0,self.Mvec[2],num) 
+        M4 = np.linspace(0,self.Mvec[3],num)
         
         # M1 = 0.001* np.linspace(0,10,num)  #np.zeros(num)
         # M2 = 0.001* -np.linspace(0,10,num)  #np.zeros(num)
@@ -384,7 +538,7 @@ class FingerRobot():
         plt.plot(t,M2,'g',ls='dotted',label='M2')
         plt.plot(t,M3,'b',ls='dashed',label='M3')
         plt.plot(t,M4,'k',ls='dashdot',label='M4')
-        plt.title (f"xd={ endTip_desPos[0]:3.2f} yd={ endTip_desPos[1]:3.2f} zd={ endTip_desPos[2]:3.2f} \n m1 = {self.Mvec[0]:3.2f}  m2 = {self.Mvec[1]:3.2f}  m3 = {self.Mvec[2]:3.2f} m4 = {self.Mvec[3]:3.2f}")
+        plt.title (f"xd={ endTip_desPos[0]:3.2f} yd={ endTip_desPos[1]:3.2f} zd={ endTip_desPos[2]:3.2f} \n m1 = {self.Mvec[0]:3.2f}, m2 = {self.Mvec[1]:3.2f}, m3 = {self.Mvec[2]:3.2f}, m4 = {self.Mvec[3]:3.2f}")
         plt.xlabel("Time(s)")
         plt.ylabel("pos(mm)")
         plt.grid()
@@ -473,12 +627,15 @@ class FingerRobot():
         # self.Jac[2][2] = (math.sin(self.thetaL))/4
         # self.Jac[2][3] = (math.sin(self.thetaL))/4
         
+        # print("Jac: ", self.Jac)
+        
         self.JacT = np.transpose(self.Jac)
         
         self.pseudoJac = np.linalg.pinv(self.Jac)
-                
+       
         self.Mvec = self.pseudoJac @ (self.endTip_PosError)
         
+        print("Mvec: ", self.Mvec)
         # self.M1 = int(self.Mvec[0])
         # self.M2 = int(self.Mvec[1])
         # self.M3 = int(self.Mvec[2])
